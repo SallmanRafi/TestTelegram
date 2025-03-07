@@ -1,106 +1,41 @@
 <!DOCTYPE html>
 <html lang="en-us">
-<head>
+  <head>
     <meta charset="utf-8">
-    <title>TelegramGame</title>
-    <style>
-        /* Remove default margins and paddings, and prevent scroll bars */
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* Ensure the Unity container fills the viewport */
-        #unity-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Ensure the Unity canvas fills the container */
-        #unity-canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        /* Background color for the canvas */
-        canvas {
-            background: black;
-        }
-
-        /* Progress bar styling */
-        #loading-cover {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #unity-loading-bar {
-            width: 50%;
-            height: 10px;
-            background-color: #555;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        #unity-progress-bar-full {
-            width: 0%;
-            height: 100%;
-            background-color: #4caf50;
-        }
-    </style>
-</head>
-<body>
-    <div id="unity-container">
-        <canvas id="unity-canvas"></canvas>
-    </div>
-    <div id="loading-cover">
-        <div id="unity-loading-bar">
-            <div id="unity-progress-bar-full"></div>
-        </div>
-    </div>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity Web Player | TelegramGame</title>
+  </head>
+  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
+    <canvas id="unity-canvas" width=960 height=600 tabindex="-1" style="width: 960px; height: 600px; background: #231F20"></canvas>
+    <script src="Build/Test.loader.js"></script>
     <script>
-        const buildUrl = "Build";
-        const loaderUrl = buildUrl + "/Test.loader.js";
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
 
-        const config = {
-            dataUrl: buildUrl + "/Test.data",
-            frameworkUrl: buildUrl + "/Test.framework.js",
-            codeUrl: buildUrl + "/Test.wasm",
-            streamingAssetsUrl: "StreamingAssets",
-            companyName: "DefaultCompany",
-            productName: "TelegramGame",
-            productVersion: "0.1.0",
-        };
+        var canvas = document.querySelector("#unity-canvas");
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.position = "fixed";
 
-        const canvas = document.querySelector("#unity-canvas");
-        const loadingCover = document.querySelector("#loading-cover");
-        const progressBarFull = document.querySelector("#unity-progress-bar-full");
+        document.body.style.textAlign = "left";
+      }
 
-        const script = document.createElement("script");
-        script.src = loaderUrl;
-
-        script.onload = () => {
-            createUnityInstance(canvas, config, (progress) => {
-                progressBarFull.style.width = `${progress * 100}%`;
-            }).then((unityInstance) => {
-                loadingCover.style.display = "none";
-            }).catch((message) => {
-                console.error("Error creating Unity instance: ", message);
-            });
-        };
-
-        document.body.appendChild(script);
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        arguments: [],
+        dataUrl: "Build/Test.data",
+        frameworkUrl: "Build/Test.framework.js",
+        codeUrl: "Build/Test.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "TelegramGame",
+        productVersion: "0.1.0",
+        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
+        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
+      });
     </script>
-</body>
+  </body>
 </html>
