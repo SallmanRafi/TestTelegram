@@ -1,41 +1,84 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
+<html>
+<head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | TelegramGame</title>
-  </head>
-  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
-    <canvas id="unity-canvas" width=960 height=600 tabindex="-1" style="width: 960px; height: 600px; background: #231F20"></canvas>
-    <script src="Build/Test.loader.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Unity WebGL Player | %UNITY_WEB_NAME%</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #unity-container { position: absolute; width: 100%; height: 100%; }
+        #unity-canvas { width: 100%; height: 100%; background: %UNITY_BACKGROUND_COLOR% }
+    </style>
+</head>
+<body>
+    <div id="unity-container">
+        <canvas id="unity-canvas" width=%UNITY_WIDTH% height=%UNITY_HEIGHT%></canvas>
+    </div>
+
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Unity WebGL loader -->
+    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
     <script>
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
+        var unityInstance;
+        
+        // Telegram Bridge functions
+        var TelegramBridge = {
+            init: function() {
+                try {
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.ready();
+                        return window.Telegram.WebApp.isVersionAtLeast('6.1') ? 1 : 0;
+                    }
+                    return 0;
+                } catch (e) {
+                    console.error("Telegram init error:", e);
+                    return 0;
+                }
+            },
+            
+            purchase: function(itemId, itemName, starsAmount) {
+                try {
+                    const invoice = {
+                        title: itemName,
+                        description: 'Purchase ' + itemName + ' for ' + starsAmount + ' Stars',
+                        currency: 'USD',
+                        prices: [{ label: itemName, amount: starsAmount * 100 }],
+                        provider_token: '1877036958:TEST:6c5bc936361d526fa2fd071f86d3c4990183947c', // Replace this
+                        payload: JSON.stringify({
+                            userId: window.Telegram.WebApp.initDataUnsafe?.id || 'unknown',
+                            itemId: itemId
+                        })
+                    };
+                    
+                    window.Telegram.WebApp.sendInvoice(invoice, function(status) {
+                        if (unityInstance) {
+                            unityInstance.SendMessage('FatePanelHandler', 'OnPurchaseResult', status);
+                        }
+                    });
+                } catch (e) {
+                    console.error("Purchase error:", e);
+                    if (unityInstance) {
+                        unityInstance.SendMessage('FatePanelHandler', 'OnPurchaseResult', 'error');
+                    }
+                }
+            }
+        };
 
-        var canvas = document.querySelector("#unity-canvas");
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.style.position = "fixed";
-
-        document.body.style.textAlign = "left";
-      }
-
-      createUnityInstance(document.querySelector("#unity-canvas"), {
-        arguments: [],
-        dataUrl: "Build/Test.data",
-        frameworkUrl: "Build/Test.framework.js",
-        codeUrl: "Build/Test.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "TelegramGame",
-        productVersion: "0.1.0",
-        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-      });
+        // Unity loader configuration
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(canvas, config)
+                .then((instance) => {
+                    unityInstance = instance;
+                })
+                .catch((message) => {
+                    alert(message);
+                });
+        };
+        document.body.appendChild(script);
     </script>
-  </body>
+</body>
 </html>
