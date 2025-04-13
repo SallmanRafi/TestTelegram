@@ -15,17 +15,30 @@
         <canvas id="unity-canvas" width=%UNITY_WIDTH% height=%UNITY_HEIGHT%></canvas>
     </div>
 
-    <!-- Telegram WebApp SDK -->
+    <!-- Unity placeholder replacements (MUST BE FIRST) -->
+    <script>
+        var loaderUrl = "%UNITY_WEBGL_LOADER_URL%";
+        var config = {
+            dataUrl: "%UNITY_DATA_URL%",
+            frameworkUrl: "%UNITY_FRAMEWORK_URL%",
+            codeUrl: "%UNITY_CODE_URL%",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "%COMPANY_NAME%",
+            productName: "%PRODUCT_NAME%",
+            productVersion: "%PRODUCT_VERSION%"
+        };
+    </script>
+
+    <!-- Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Unity WebGL loader -->
-    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
+
+    <!-- Telegram Purchase Bridge -->
     <script>
         var unityInstance;
-        
-        // Telegram Bridge functions
+        var canvas = document.querySelector("#unity-canvas");
+
         var TelegramBridge = {
-            init: function() {
+            init: function () {
                 try {
                     if (window.Telegram && window.Telegram.WebApp) {
                         window.Telegram.WebApp.ready();
@@ -37,22 +50,22 @@
                     return 0;
                 }
             },
-            
-            purchase: function(itemId, itemName, starsAmount) {
+
+            purchase: function (itemId, itemName, starsAmount) {
                 try {
                     const invoice = {
                         title: itemName,
                         description: 'Purchase ' + itemName + ' for ' + starsAmount + ' Stars',
                         currency: 'USD',
                         prices: [{ label: itemName, amount: starsAmount * 100 }],
-                        provider_token: '1877036958:TEST:6c5bc936361d526fa2fd071f86d3c4990183947c', // Replace this
+                        provider_token: '1877036958:TEST:6c5bc936361d526fa2fd071f86d3c4990183947c', // Replace with your actual token
                         payload: JSON.stringify({
                             userId: window.Telegram.WebApp.initDataUnsafe?.id || 'unknown',
                             itemId: itemId
                         })
                     };
-                    
-                    window.Telegram.WebApp.sendInvoice(invoice, function(status) {
+
+                    window.Telegram.WebApp.sendInvoice(invoice, function (status) {
                         if (unityInstance) {
                             unityInstance.SendMessage('FatePanelHandler', 'OnPurchaseResult', status);
                         }
@@ -66,7 +79,7 @@
             }
         };
 
-        // Unity loader configuration
+        // Load Unity after config and canvas are ready
         var script = document.createElement("script");
         script.src = loaderUrl;
         script.onload = () => {
